@@ -1,6 +1,8 @@
 use std::cell::{Ref, RefCell};
 use std::rc::{Rc, Weak};
 
+use super::tree::Node;
+
 pub type BstNodeLink = Rc<RefCell<BstNode>>;
 pub type WeakBstNodeLink = Weak<RefCell<BstNode>>;
 
@@ -184,28 +186,28 @@ impl BstNode {
     /**
      * NOTE: Buggy from pull request
      * Find node successor according to the book
-     * Should return None, if x_node is the highest key in the tree
+     * Should return None, if node is the highest key in the tree
      */
-    pub fn tree_successor(x_node: &BstNodeLink) -> Option<BstNodeLink> {
+    pub fn tree_successor(node: &BstNodeLink) -> Option<BstNodeLink> {
         // directly check if the node has a right child, otherwise go to the next block
-        if let Some(right_node) = &x_node.borrow().right {
+        if let Some(right_node) = &node.borrow().right {
             return Some(right_node.borrow().minimum());
         }
         // empty right child case
         else {
-            let mut x_node = x_node;
-            let mut y_node = BstNode::upgrade_weak_to_strong(x_node.borrow().parent.clone());
+            let mut node = node;
+            let mut y_node = BstNode::upgrade_weak_to_strong(node.borrow().parent.clone());
             let mut temp: BstNodeLink;
 
             while let Some(ref exist) = y_node {
                 if let Some(ref left_child) = exist.borrow().left {
-                    if BstNode::is_node_match(left_child, x_node) {
+                    if BstNode::is_node_match(left_child, node) {
                         return Some(exist.clone());
                     }
                 }
 
                 temp = y_node.unwrap();
-                x_node = &temp;
+                node = &temp;
                 y_node = BstNode::upgrade_weak_to_strong(temp.borrow().parent.clone());
             }
 
@@ -268,30 +270,30 @@ impl BstNode {
      * Alternate simpler version of tree_successor that made use of is_nil checking
      */
     #[allow(dead_code)]
-    pub fn tree_successor_simpler(x_node: &BstNodeLink) -> Option<BstNodeLink>{
-        //create a shadow of x_node so it can mutate
-        let mut x_node = x_node;
-        let right_node = &x_node.borrow().right.clone();
+    pub fn tree_successor_simpler(node: &BstNodeLink) -> Option<BstNodeLink>{
+        //create a shadow of node so it can mutate
+        let mut node = node;
+        let right_node = &node.borrow().right.clone();
         if BstNode::is_nil(right_node)!=true{
             return Some(right_node.clone().unwrap().borrow().minimum());
         }
 
-        let mut y_node = BstNode::upgrade_weak_to_strong(x_node.borrow().parent.clone());
+        let mut y_node = BstNode::upgrade_weak_to_strong(node.borrow().parent.clone());
         let y_node_right = &y_node.clone().unwrap().borrow().right.clone();
         let mut y_node2: Rc<RefCell<BstNode>>;
-        while BstNode::is_nil(&y_node) && BstNode::is_node_match_option(Some(x_node.clone()), y_node_right.clone()) {
+        while BstNode::is_nil(&y_node) && BstNode::is_node_match_option(Some(node.clone()), y_node_right.clone()) {
             y_node2 = y_node.clone().unwrap();
-            x_node = &y_node2;
+            node = &y_node2;
             let y_parent = y_node.clone().unwrap().borrow().parent.clone().unwrap();
             y_node = BstNode::upgrade_weak_to_strong(Some(y_parent));
         }
 
         //in case our sucessor traversal yield root, means self is the highest key
-        if BstNode::is_node_match_option(y_node.clone(), Some(BstNode::get_root(&x_node))) {
+        if BstNode::is_node_match_option(y_node.clone(), Some(BstNode::get_root(&node))) {
             return None;
         }
 
-        //default return self / x_node
+        //default return self / node
         return Some(y_node.clone().unwrap())
     }
 
@@ -352,4 +354,73 @@ impl BstNode {
             Some(x) => Some(x.upgrade().unwrap()),
         }
     }
+
+    pub fn add_node(&self, target_node: &BstNodeLink, value:i32) ->bool{
+        let key = self.key.unwrap();
+        if value < key{
+            if self.left.is_some(){
+                let new_left = self.left.clone().unwrap();
+                return new_left.borrow_mut().add_node(&new_left,value);
+            }else{
+                return true;
+            }
+        }else{
+            if self.right.is_some(){
+                let new_right = self.right.clone().unwrap();
+                return new_right.borrow_mut().add_node(&new_right, value);
+            }else{
+                return true;
+            }
+        }
+    }
+
+
+
+
+    
+
+    fn tree_predecessor(node : &BstNodeLink ) -> Option<BstNodeLink>{
+
+        if let Some(right_node) = &node.borrow().left {
+            return Some(right_node.borrow().maximum());
+        } else {
+            let mut node = node;
+            let mut y_node = node.borrow().parent.as_ref().and_then(|p| p.upgrade());
+            let mut temp: BstNodeLink;
+            while let Some(ref exist) = y_node {
+                if let Some(ref left_child) = exist.borrow().right{
+                    if Self::is_node_match(left_child, node) {
+                        return Some(exist.clone());
+                    }
+                }
+                temp = y_node.unwrap();
+                node = &temp;
+                y_node = node.borrow().parent.as_ref().and_then(|p| p.upgrade());
+            }
+            None
+        }
+    }
+
+    
+
+    fn median(x: &Option<BstNodeLink>) {
+
+        let  array:[i32;11] = [2,3,4,6,7,9,13,15,17,18,20];
+        if let Some(node) = x {
+            Self::median(&node.borrow().left);
+            Self::median(&node.borrow().right);
+
+            if array.len()%2 != 0 {
+                println!("median is {}",9);
+                
+            }
+        }
+    }
+        
+    
+
+    fn tree_rebalance(node: &BstNodeLink) -> BstNodeLink{
+
+    }
+
 }

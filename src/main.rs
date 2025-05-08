@@ -56,6 +56,8 @@ fn test_binary_search_tree(){
                 third_left_subtree_link.borrow_mut().add_left_child(third_left_subtree_link, 9);
             }
         }
+
+
     }
 
     //print the tree at this time
@@ -99,6 +101,8 @@ fn test_binary_search_tree(){
         22 // non-existent key
     ];
 
+    
+
     for &key in query_keys.iter() {
         if let Some(node) = rootlink.borrow().tree_search(&key) {
             print!("successor of node ({}) is ", key);
@@ -125,6 +129,8 @@ fn test_binary_search_tree(){
         let rootalter = BstNode::tree_delete(&rootlink2.as_ref().unwrap());
         generate_dotfile_bst(&rootalter, "bst_delete_root.dot");
     }
+
+    
 }
 
 fn test_index(){
